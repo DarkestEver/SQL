@@ -13,11 +13,11 @@ WITH info AS
 	select row_number() OVER (order by account asc , date asc) AS i,* from freq 
     )
 
-select account,count(*) as count, sum(datediff_indays) sum_of_diff_of_transc_days,(sum(datediff_indays)/count(*))  as frequency
+select account,count(*) as count, sum(datediff_indays) sum_of_diff_of_transc_days,(sum(datediff_indays)/(count(*) - 1))  as frequency
 from
- (select  t1.account as account,  (t2.date - t1.date ) as datediff_indays
+ (select  t1.account as account,  (t2.date - t1.date )as datediff_indays
 from info t1 
 left join info t2
-on t1.i = t2.i-1
-where t1.account = t2.account) as temp
+on t1.i = t2.i-1 and t1.account = t2.account
+ ) as temp
 group by account;
