@@ -1,0 +1,220 @@
+DROP TABLE IF EXISTS table_obervations CASCADE;
+
+CREATE TABLE table_obervations
+(
+   sno                  serial         NOT NULL,
+   batch_obs            integer,
+   schemaname_obs       varchar(250),
+   tablename_obs        varchar(250),
+   columnname_obs       varchar(250),
+   datatype_obs         varchar(50),
+   rowcount_obs         varchar(250),
+   minvalue_obs         varchar(250),
+   maxvalue_obs         varchar(250),
+   minlength_obs        varchar(250),
+   maxlength_obs        varchar(250),
+   sumofvalue_obs       varchar(250),
+   averageofvalue_obs   varchar(250),
+   uniquecount_obs      varchar(250),
+   nullcount_obs        varchar(250),
+   blankcount_obs       varchar(250),
+   othercharacters_obs  varchar(250),
+   createdtime_obs      date           DEFAULT now()
+);
+
+
+
+CREATE OR REPLACE FUNCTION public.table_observation(tablename character varying)
+  RETURNS TABLE(_tabname text, _datatype character varying, _rowcount character varying, _minval character varying, _maxval character varying, _minlength character varying, _maxlength character varying, _sumofvalue character varying, _averageofvalue character varying, _uniquecount character varying, _nullcount character varying, _blankcount character varying, _othercharacters character varying)
+  LANGUAGE plpgsql
+AS
+$body$
+DECLARE
+  schemaname Varchar(15);
+  RowCount Varchar(15);
+  Column_names text;
+  DataType Varchar(15);
+  MinVal	Varchar(250);
+  MaxVal Varchar(250);
+  MinLength	Varchar(250);
+  MaxLength	Varchar(250);
+  SumOfValue Varchar(250);
+  AverageOfValue Varchar(250);
+  UniqueCount Varchar(250);
+  NullCount	Varchar(250);
+  BlankCount	Varchar(250);
+  OtherCharacters Varchar(250);
+  batch int;
+BEGIN
+  
+
+	batch :=  (select max(batch_obs) from public.table_obervations);
+	if batch is null then 
+	batch := 0;
+	end if;
+	
+  batch := batch + 1;
+	OtherCharacters := to_char(batch,'999999');
+
+   FOR Column_names IN
+        execute   ' select  column_name  from information_schema.columns where table_name = '''  || tableName  || ''''
+   LOOP
+
+
+---   count  
+    BEGIN  
+      EXECUTE   'SELECT  count(' || Column_names || ') from ' || tableName   into RowCount  ;
+    EXCEPTION
+      WHEN OTHERS THEN RowCount := 'ErrorOccured';
+    END;
+    
+---  blank count  
+    BEGIN  
+      EXECUTE    'SELECT  count(*) from ' || tableName  || ' where trim('|| Column_names || '::text) = '' '''  into BlankCount  ;
+    EXCEPTION
+      WHEN OTHERS THEN BlankCount := 'ErrorOccured';
+    END;
+
+--- null count  
+    BEGIN  
+      EXECUTE   'SELECT  count(*) from ' || tableName  || ' where '|| Column_names || ' is null '  into NullCount  ;
+    EXCEPTION
+      WHEN OTHERS THEN NullCount := 'ErrorOccured';
+    END;
+
+--- unique count 
+    BEGIN  
+      EXECUTE   'SELECT  count(distinct(' || Column_names || ')) from ' || tableName  || ''  into UniqueCount  ;
+    EXCEPTION
+      WHEN OTHERS THEN UniqueCount := 'ErrorOccured';
+    END;
+
+---  Data type
+    BEGIN  
+      EXECUTE   'SELECT  ' || Column_names || '::NUMERIC from ' || tableName  || ''   ;
+      DataType := 'Number';
+    EXCEPTION
+      WHEN OTHERS THEN 
+         Begin
+            EXECUTE   'SELECT  ' || Column_names || '::date from ' || tableName  || ''   ;
+            DataType := 'Date';
+          EXCEPTION
+          WHEN OTHERS THEN 
+           DataType := 'Varchar';
+          End;
+    END;
+
+---  average Of Value
+
+    BEGIN  
+      EXECUTE   'SELECT  avg(' || Column_names || '::decimal) from ' || tableName  || ''  into AverageOfValue  ;
+    EXCEPTION
+      WHEN OTHERS THEN AverageOfValue := 'ErrorOccured';
+    END;
+
+
+---  Sum Of Value
+
+    BEGIN  
+      EXECUTE   'SELECT  sum(' || Column_names || '::decimal) from ' || tableName  || ''  into SumOfValue  ;
+    EXCEPTION
+      WHEN OTHERS THEN SumOfValue := 'ErrorOccured';
+    END;
+
+    
+
+    
+
+   
+--- MAX value 
+    BEGIN  
+      EXECUTE   'SELECT  MAX(' || Column_names || ') from '  || tableName  || ''  into MaxVal  ;
+    EXCEPTION
+      WHEN OTHERS THEN MaxVal := 'ErrorOccured';
+    END;
+   
+ --- MIN value 
+    BEGIN  
+      EXECUTE   'SELECT  MIN(' || Column_names || ') from '  || tableName  || ''  into minVal  ;
+    EXCEPTION
+      WHEN OTHERS THEN minVal := 'ErrorOccured';
+    END;   
+
+
+--- Max Length value 
+    BEGIN  
+      EXECUTE   'SELECT  MAX(LENGTH(' || Column_names || '::text)) from '  || tableName  || '' into maxLength  ;
+    EXCEPTION
+      WHEN OTHERS THEN MaxLength := 'ErrorOccured';
+    END;
+    
+--- Min Length value 
+    BEGIN  
+      EXECUTE   'SELECT  MIN(LENGTH(' || Column_names || '::text)) from '  || tableName  || ''  into MinLength  ;
+    EXCEPTION
+      WHEN OTHERS THEN MinLength := 'ErrorOccured';
+    END;
+
+
+
+	insert into public.table_obervations(
+		schemaname_obs,
+		tablename_obs,
+		columnname_obs,
+		datatype_obs,
+		RowCount_obs,
+		minvalue_obs,
+		maxvalue_obs,
+		minlength_obs,
+		maxlength_obs,
+		sumofvalue_obs,
+		averageofvalue_obs,
+		uniquecount_obs,
+		nullcount_obs,
+		blankcount_obs,
+		othercharacters_obs,
+		batch_obs
+		)
+		values
+		(
+		schemaname,
+		tablename,
+		Column_names,
+		datatype,
+		RowCount,
+		minval,
+		maxval,
+		minlength,
+		maxlength,
+		sumofvalue,
+		averageofvalue,
+		uniquecount,
+		nullcount,
+		blankcount,
+		othercharacters,
+		batch
+		);
+		
+	
+	
+   return QUERY select 
+  Column_names,
+  DataType,
+  RowCount,
+  MinVal,
+  MaxVal ,
+  MinLength	,
+  MaxLength	,
+  SumOfValue ,
+  AverageOfValue ,
+  UniqueCount ,
+  NullCount	,
+  BlankCount	,
+  OtherCharacters;
+   ---  return query   execute  'select 0::text,' || minVal ||'::text';
+   END LOOP;
+END;
+$body$
+ VOLATILE
+ COST 100
+ ROWS 1000;
