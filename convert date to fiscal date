@@ -1,0 +1,34 @@
+- Function: get_fiscal(date)
+
+-- DROP FUNCTION get_fiscal(date);
+
+CREATE OR REPLACE FUNCTION get_fiscal(entrydate date)
+RETURNS character varying AS
+$BODY$
+
+
+BEGIN
+
+Return (select case
+when to_char( entrydate, 'MM') = '07' then '001' ||'.'|| case when (date_part('month',entrydate) >6) then date_part('year',entrydate) +1 else date_part('year',entrydate) end
+when to_char( entrydate, 'MM') = '08' then '002' ||'.'|| case when (date_part('month',entrydate) >6) then date_part('year',entrydate) +1 else date_part('year',entrydate) end
+when to_char( entrydate, 'MM') = '09' then '003'||'.'|| case when (date_part('month',entrydate) >6) then date_part('year',entrydate) +1 else date_part('year',entrydate) end
+when to_char( entrydate, 'MM') = '10' then '004'||'.'|| case when (date_part('month',entrydate) >6) then date_part('year',entrydate) +1 else date_part('year',entrydate) end
+when to_char( entrydate, 'MM') = '11' then '005'||'.'|| case when (date_part('month',entrydate) >6) then date_part('year',entrydate) +1 else date_part('year',entrydate) end
+when to_char( entrydate, 'MM') = '12' then '006'||'.'|| case when (date_part('month',entrydate) >6) then date_part('year',entrydate) +1 else date_part('year',entrydate) end
+when to_char( entrydate, 'MM') = '01' then '007'||'.'|| case when (date_part('month',entrydate) >6) then date_part('year',entrydate) +1 else date_part('year',entrydate) end
+when to_char( entrydate, 'MM') = '02' then '008'||'.'|| case when (date_part('month',entrydate) >6) then date_part('year',entrydate) +1 else date_part('year',entrydate) end
+when to_char( entrydate, 'MM') = '03' then '009'||'.'|| case when (date_part('month',entrydate) >6) then date_part('year',entrydate) +1 else date_part('year',entrydate) end
+when to_char( entrydate, 'MM') = '04' then '010'||'.'|| case when (date_part('month',entrydate) >6) then date_part('year',entrydate) +1 else date_part('year',entrydate) end
+when to_char( entrydate, 'MM') = '05' then '011'||'.'|| case when (date_part('month',entrydate) >6) then date_part('year',entrydate) +1 else date_part('year',entrydate) end
+when to_char( entrydate, 'MM') = '06' then '012'||'.'|| case when (date_part('month',entrydate) >6) then date_part('year',entrydate) +1 else date_part('year',entrydate) end
+end );
+
+
+END;
+
+$BODY$
+LANGUAGE plpgsql VOLATILE
+COST 100;
+ALTER FUNCTION get_fiscal(date)
+OWNER TO postgres;
