@@ -1,0 +1,43 @@
+CREATE TABLE test
+(
+  customer integer,
+  datet date,
+  invoice character varying(50)
+)
+
+
+SELECT *
+FROM   crosstab('select fst.customer::text || ''-'' || fst.year::text as customer,   month  ,
+case when countofinvoice is null then 0 else 1 end as frq from
+(
+ select distinct customer,  month, year  from
+(
+    select month, year
+    from
+    generate_series(2014, 2016) as year cross join
+    generate_series(1,12) as month
+    order by year, month
+) as t1, test
+)  fst
+left join 
+(select customer ,extract(month from datet) months, extract(year from datet) years, count(*) as countofinvoice
+from test
+group by customer,extract(month from datet), extract(year from datet)) snd
+on fst.year= snd.years and fst.month= snd.months and fst.customer= snd.customer
+order by fst.customer ,fst.year,   fst.month')
+AS final_result(customer text, 
+"Jan" int,
+ "Feb" int,
+ "Mar" int,
+ "Apr" int,
+"May" int,
+"Jun" int,
+"Jul" int,
+"Aug" int,
+"Sep" int,
+"Oct" int,
+"Nov" int,
+"Dec" int
+)
+
+
