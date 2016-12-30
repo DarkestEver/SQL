@@ -1,0 +1,57 @@
+-- Function: getallfoo(character varying, character varying, character varying, date, character varying, date, date, character varying, character varying, character varying, character varying, character varying, character varying)
+
+-- DROP FUNCTION getallfoo(character varying, character varying, character varying, date, character varying, date, date, character varying, character varying, character varying, character varying, character varying, character varying);
+
+CREATE OR REPLACE FUNCTION getallfoo(clearinddate character varying, docdate character varying, netduedate character varying, asofdate date, amount_col_name character varying, startdate date, enddate date, period character varying, clearingdoc character varying, entrydate character varying, columnnames character varying, tablename character varying, clause character varying)
+RETURNS text AS
+$BODY$
+DECLARE
+
+r date;
+ar_curr_month varchar(25);
+startDate1 timestamp;
+sql_script text;
+BEGIN
+
+drop view if exists master_view;
+sql_script := 'create view master_view as Select ' || ColumnNames || ' ,' ;
+execute 'SELECT date_trunc(''month'',''' || startDate ||'''::date) + ''1 day''::interval' into startDate1;
+
+sql_script := sql_script || clearindDate || ' - ' || entrydate || ' AS avg_days_to_pay_from_inv_date, ';
+sql_script := sql_script || clearindDate || ' - ' || netduedate || ' AS avg_days_to_pay_from_due_date, ';
+
+sql_script := sql_script || ' case when ' || clearindDate || ' > ' || netDueDate || ' THEN ''Pymt Delay'' WHEN (' || clearindDate || ' - ' || netDueDate || ' ) = 0 THEN ''Paid on time'' WHEN (' || clearindDate || ' - ' || netDueDate || ' ) = 0 THEN ''Paid early'' ELSE NULL END AS delay, ';
+sql_script := sql_script || ' case when ' || clearindDate || ' > ' || netDueDate || ' THEN ' || amount_col_name || ' else NULL end as delay_amount, ' ;
+sql_script := sql_script || ' case when ' || clearindDate || ' is null OR ' || clearingDoc || ' IS NULL then ''open'' else ''close'' END AS cleared_flag, ';
+
+sql_script := sql_script || '''' || asOfDate || '''::date - ' || docdate || ' as AR_Ageing_in_days , ' ;
+sql_script := sql_script || ' case when (''' || asOfDate ||'''::date - ' || docdate || ' ) > 0 and (''' || asOfDate ||'''::date - ' || docdate || ') <=30 and (' || clearinddate || ' is NULL and ' || clearingdoc || ' is null) THEN ''0-30'' when (''' || asOfDate ||'''::date - ' || docdate || ' ) > 30 and (''' || asOfDate ||'''::date - ' || docdate || ' ) <=60 and (' || clearinddate || ' is NULL and ' || clearingdoc || ' is null) THEN ''30-60'' when (''' || asOfDate ||'''::date - ' || docdate || ' ) > 60 and (''' || asOfDate ||'''::date - ' || docdate || ' ) <=90 and (' || clearinddate || ' is NULL and ' || clearingdoc || ' is null) THEN ''60-90'' when (''' || asOfDate ||'''::date - ' || docdate || ' ) > 90 and (''' || asOfDate ||'''::date - ' || docdate || ' ) <=60 THEN ''90+'' end as AR_Ageing_bucket, ';
+
+sql_script := sql_script || '''' || asOfDate || '''::date - ' || netduedate || ' as Overdue_Ageing_in_days , ' ;
+sql_script := sql_script || ' case when (''' || asOfDate ||'''::date - ' || netduedate || ' ) > 0 then ''Not Due'' when (''' || asOfDate ||'''::date - ' || netduedate || ' ) > 0 and (''' || asOfDate ||'''::date - ' || netduedate || ') <=30 and (' || clearinddate || ' is NULL and ' || clearingdoc || ' is null) THEN ''0-30'' when (''' || asOfDate ||'''::date - ' || netduedate || ' ) > 30 and (''' || asOfDate ||'''::date - ' || netduedate || ' ) <=60 and (' || clearinddate || ' is NULL and ' || clearingdoc || ' is null) THEN ''30-60'' when (''' || asOfDate ||'''::date - ' || netduedate || ' ) > 60 and (''' || asOfDate ||'''::date - ' || netduedate || ' ) <=90 and (' || clearinddate || ' is NULL and ' || clearingdoc || ' is null) THEN ''60-90'' when (''' || asOfDate ||'''::date - ' || netduedate || ' ) > 90 and (''' || asOfDate ||'''::date - ' || netduedate || ' ) <=60 THEN ''90+'' end as Overdue_Ageing_bucket ';
+
+
+FOR r IN 
+execute 'SELECT date_trunc(''month'',generate_series) + ''1 Month''::interval - ''1 day''::interval as months FROM generate_series(''' || startDate1 || '''::timestamp,''' || enddate || ''','''|| period ||''')'
+LOOP
+execute ' select to_char( ''' || r || '''::date,''Mon_YYYY'')' into ar_curr_month;
+--	sql_script := sql_script || ' , case when ' || clearindDate || ' <> NULL AND ' || docDate || ' <= ''' || asOfDate ||'''::date AND ' || clearindDate || ' > ''' || asOfDate ||'''::date THEN ' || amount_col_name || ' when ' || clearindDate || ' is NULL AND ' || docDate || '<= ''' || asOfDate ||'''::date THEN ' || amount_col_name || ' else null end as to_' || ar_curr_month ;
+--	sql_script := sql_script || ' , case when ' || clearindDate || ' <> NULL AND ' || docDate || ' <= ''' || asOfDate ||'''::date AND ' || clearindDate || ' > ''' || asOfDate ||'''::date and ' || clearindDate || ' > ' || netDueDate ||' THEN ' || amount_col_name || ' when ' || clearindDate || ' is NULL AND ' || docDate || '<= ''' || asOfDate ||'''::date and ' || clearindDate || ' > ' || netDueDate ||' THEN ' || amount_col_name || ' else null end as od_' || ar_curr_month;
+-- sql_script := sql_script || ' , case when ' || clearindDate || ' <> NULL AND ' || docDate || ' <= ''' || asOfDate ||'''::date AND ' || clearindDate || ' > ''' || asOfDate ||'''::date and ' || clearindDate || ' <= ' || netDueDate ||' THEN ' || amount_col_name || ' when ' || clearindDate || ' is NULL AND ' || docDate || '<= ''' || asOfDate ||'''::date and ' || clearindDate || ' <= ' || netDueDate ||' THEN ' || amount_col_name || ' else null end as nd_' || ar_curr_month;
+
+sql_script := sql_script || ' , case when ' || clearindDate || ' <> NULL AND ' || docDate || ' <= ''' || r ||'''::date AND ' || clearindDate || ' > ''' || r ||'''::date THEN ' || amount_col_name || ' when ' || clearindDate || ' is NULL AND ' || docDate || '<= ''' || r ||'''::date THEN ' || amount_col_name || ' else null end as to_' || ar_curr_month ;
+sql_script := sql_script || ' , case when ' || clearindDate || ' <> NULL AND ' || docDate || ' <= ''' || r ||'''::date AND ' || clearindDate || ' > ''' || r ||'''::date and ' || clearindDate || ' > ' || netDueDate ||' THEN ' || amount_col_name || ' when ' || clearindDate || ' is NULL AND ' || docDate || '<= ''' || r ||'''::date and ' || clearindDate || ' > ' || netDueDate ||' THEN ' || amount_col_name || ' else null end as od_' || ar_curr_month;
+sql_script := sql_script || ' , case when ' || clearindDate || ' <> NULL AND ' || docDate || ' <= ''' || r ||'''::date AND ' || clearindDate || ' > ''' || r ||'''::date and ' || clearindDate || ' <= ' || netDueDate ||' THEN ' || amount_col_name || ' when ' || clearindDate || ' is NULL AND ' || docDate || '<= ''' || r ||'''::date and ' || clearindDate || ' <= ' || netDueDate ||' THEN ' || amount_col_name || ' else null end as nd_' || ar_curr_month;
+
+
+END LOOP;
+
+
+execute sql_script || ' from ' || TableName || ' ' || clause;
+RETURN 'done';
+END
+$BODY$
+LANGUAGE plpgsql VOLATILE
+COST 100;
+ALTER FUNCTION getallfoo(character varying, character varying, character varying, date, character varying, date, date, character varying, character varying, character varying, character varying, character varying, character varying)
+OWNER TO postgres;
