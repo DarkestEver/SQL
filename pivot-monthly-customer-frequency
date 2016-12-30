@@ -5,9 +5,8 @@ CREATE TABLE test
   invoice character varying(50)
 )
 
-
-SELECT *
-FROM   crosstab('select fst.customer::text || ''-'' || fst.year::text as customer,   month  ,
+(SELECT  split_part(customer,'::', 1) as customercode, split_part(customer,'::', 2) as year,*
+FROM   crosstab('select fst.customer::text || ''::'' || fst.year::text as customer,   month  ,
 case when countofinvoice is null then 0 else 1 end as frq from
 (
  select distinct customer,  month, year  from
@@ -41,3 +40,4 @@ AS final_result(customer text,
 )
 
 
+)
