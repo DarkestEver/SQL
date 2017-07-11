@@ -1,0 +1,20 @@
+# getting the nth value 
+
+CREATE TABLE employee
+(
+  employeeid serial NOT NULL,
+  employeename character varying(10),
+  departmentid integer,
+  salary money
+);
+
+--- method 1
+SELECT employeeid, salary FROM Employee e1 WHERE 2 = (SELECT COUNT(DISTINCT salary) FROM Employee e2 WHERE e2.salary > e1.salary ) ;
+
+---- method 2
+select * from (
+SELECT employeeid, salary, dense_rank() over ( order by salary desc ) as dr FROM Employee
+) a where dr = 2;
+
+--- method 3
+SELECT  salary FROM ( SELECT DISTINCT salary FROM Employee ORDER BY salary DESC  limit 2) AS temp ORDER BY salary limit 1;
