@@ -1,0 +1,34 @@
+create table EmpDup(empid int,name varchar(20))
+    
+    insert into EmpDup values(1,'Andy')
+    insert into EmpDup values (1,'Andy')
+    insert into EmpDup values(2,'Bill')
+    insert into EmpDup values(2,'Bill')
+    insert into EmpDup values (2,'Bill')
+    insert into EmpDup values (3,'Chris')
+;
+
+---  method 1
+
+select distinct * into #tmp From EmpDup
+    delete from EmpDup
+    insert into EmpDup                
+    select * from #tmp drop table #tmp;
+
+--- method 2
+
+alter table EmpDup add  sno int identity(1,1)
+    delete from EmpDup where sno in
+    (
+    select sno from (
+    select *,
+    RANK() OVER ( PARTITION BY empid,name ORDER BY sno DESC )rank
+    From EmpDup
+    )T
+    where rank>1
+    );
+
+    alter table EmpDup ;
+    drop  column sno;
+
+ 	
