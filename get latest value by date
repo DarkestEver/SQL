@@ -1,0 +1,4 @@
+select * from (
+select id, invoicedate, invoiceamount, row_number() over( partition by invoicedate order by invoicedate desc) as ranked
+from napp_ap_invoice_transaction_report 
+) a where ranked = 2
