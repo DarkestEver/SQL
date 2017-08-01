@@ -1,0 +1,47 @@
+create table testt (
+id int,
+text1 varchar(255),
+text2 varchar(255),
+text3 varchar(255),
+text4 varchar(255)
+);
+
+insert into testt values (2,'a',NULL,NULL,NULL);
+insert into testt  values  (2,NULL,'b',NULL,NULL);
+insert into testt  values (2,NULL,NULL,'c',NULL);
+insert into testt  values  (3,NULL,NULL,NULL,'d');
+insert into testt  values  (3,'f',NULL,NULL,'d');
+insert into testt  values  (3,NULL,NULL,NULL,NULL);
+
+
+/////1;"a";"";"";""
+1;"";"b";"";""
+1;"";"";"c";""
+1;"";"";"";"d"
+1;"f";"";"";"d"
+1;"";"";"";""
+2;"a";"";"";""
+2;"";"b";"";""
+2;"";"";"c";""
+3;"";"";"";"d"
+3;"f";"";"";"d"
+3;"";"";"";""
+////////////////
+
+select * from testt;
+
+
+select id, replace( trim(regexp_replace(array_to_string (col, ','), ',+', ' ', 'g')),' ',',')  from
+(
+select id, array_agg( coalesce(text1, '') || ',' || coalesce(text2, '') || ',' || coalesce(text3, '') || ',' ||  coalesce(text4, '')  ) as col from testt 
+group by id 
+) as t
+
+
+////////////////
+1;"a,b,c,d,f,d"
+2;"a,b,c"
+3;"d,f,d"
+//////////////////
+
+
