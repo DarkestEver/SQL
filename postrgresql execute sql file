@@ -1,0 +1,5 @@
+navigate postgresql -> bin folder
+
+open cmd 
+
+psql -h localhost -d iLead -U postgres -p 5432 -a -q -f filepath
