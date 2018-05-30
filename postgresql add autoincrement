@@ -1,0 +1,4 @@
+CREATE SEQUENCE new_idata_15_5_2018_seq OWNED BY new_idata_15_5_2018.id;
+SELECT setval('new_idata_15_5_2018_seq', coalesce(max(id), 0)) FROM new_idata_15_5_2018;
+ALTER TABLE new_idata_15_5_2018 ALTER COLUMN id SET DEFAULT nextval('new_idata_15_5_2018_seq'); 
+
