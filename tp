@@ -1,0 +1,114 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Aug  8 19:33:56 2018
+
+@author: ksingh
+"""
+
+from time import sleep
+import mainlib as run
+
+
+def extract_company(driver):
+    company_link = driver.current_url
+    about_us = run.getDataByClass(driver, 'org-about-us-organization-description__text')
+    company_domain = run.getDataByClass(driver, 'org-about-company-module__company-page-url')
+    head_quater = run.getDataByClass(driver, 'org-about-company-module__headquarters')
+    founded_year = run.getDataByClass(driver, 'org-about-company-module__founded')
+    company_type = run.getDataByClass(driver, 'org-about-company-module__company-type')
+    employee_size = run.getDataByClass(driver, 'org-about-company-module__company-staff-count-range')
+    company_name = run.getDataByClass(driver,'org-top-card-module__name')
+    dic_company_details = {
+             'company_link':company_link,
+             'about_us':about_us,
+             'company_domain':company_domain,
+             'head_quater':head_quater,
+             'founded_year':founded_year,
+             'company_type':company_type,
+             'employee_size':employee_size,
+             'company_name':company_name
+            }
+    return dic_company_details
+
+def insert_mongodb(dic):
+    print(dic)
+    
+def run_company_extraction():
+    linkedin_username = 'keshav.singh4@hotmail.com'
+    linkedin_password = 'k@8090551004'
+    instant_id = 0
+    search_limit_url = 100
+    url_table = 'chunk.linkedin_url_cntry_usca_fn_15'
+    dir_path = r'C:\Users\ksingh\Desktop\new_code'
+    i = 1
+    url_list = ['https://www.linkedin.com/company/28642256/',
+                'https://www.linkedin.com/company/12607/',
+                'https://www.linkedin.com/company/17979848/',
+                'https://www.linkedin.com/company/16631/',
+                'https://www.linkedin.com/company/10489240/',
+                'https://www.linkedin.com/company/2683701/',
+                'https://www.linkedin.com/company/5323536/',
+                'https://www.linkedin.com/company/1357674/',
+                'https://www.linkedin.com/company/1586/',
+                'https://www.linkedin.com/company/1299022/',
+                'https://www.linkedin.com/company/162901/',
+                'https://www.linkedin.com/company/77386/',
+                'https://www.linkedin.com/company/1855/',
+                'https://www.linkedin.com/company/1900/',
+                'https://www.linkedin.com/company/8074624/',
+                'https://www.linkedin.com/company/837856/',
+                'https://www.linkedin.com/company/9333532/',
+                'https://www.linkedin.com/company/3264/',
+                'https://www.linkedin.com/company/2679587/',
+                'https://www.linkedin.com/company/2311/'
+                ]
+    for url in url_list:
+        print('1')
+        if i%15 == 0:
+            print('2')
+            i = 1
+            try:
+                print('3')
+                driver.close()
+                driver.quit()
+                print('4')
+            except:
+                print('5')
+                pass
+        if i == 1:
+            print('6')
+            driver = run.get_driver('D:\\Anaconda Set Up\\driver\\chromedriver.exe',
+                            browser = 'chrome',
+                            _PROXY_HOST= '' ,
+                            _PROXY_PORT=53281,
+                            _USERNAME='',
+                            _PASSWORD='',
+                            _url_table = url_table,
+                            _instant_id = instant_id,
+                            _search_limit_url = search_limit_url,
+                            _dir_path = dir_path,
+                            db=False
+                            )    
+            run.action_linkedin_login(driver,linkedin_username , linkedin_password)
+            print('7')
+        try:
+            sleep(3)
+            driver.set_page_load_timeout(60)
+            print('8')
+            driver.get(url)
+            sleep(4)
+            print('9')
+            sleep(2)
+            driver.find_element_by_id('org-about-company-module__show-details-btn').click()
+            sleep(4)
+            driver.execute_script( 'window.scrollTo(0,document.body.scrollHeight);')
+            sleep(1)
+            print('10')
+            dic_company_details = extract_company(driver)
+            print('11')
+            insert_mongodb(dic_company_details)
+            print('---------------------------------------------')
+        except:
+            pass
+        i = i + 1
+        print('12')
